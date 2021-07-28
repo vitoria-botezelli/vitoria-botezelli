@@ -1,0 +1,27 @@
+def plot_genes_per_cell(adata, list_of_genes, use_raw=True):
+    # se use_raw=True, vai utilizar a camada raw do objeto adata, e a expressão gênica será sempre > 0. 
+    # Para dar certo, a camada precisa estar definida (ter executado adata.raw=adata antes da normalização)
+    # Caso não tenha definido, usar usar use_raw=False, mas aí vai haver valores negativos
+    if use_raw: 
+        ada = pd.DataFrame(adata.raw.X, index=adata.obs.index, columns=adata.var.index)
+        to_plot = ada.loc[:, list_of_genes]
+    else: 
+        to_plot = pd.DataFrame(adata[:, list_of_genes].X, index=adata.obs.index, columns=list_of_genes)
+    # As células serão ordenada pela expressão do primerio gene da lista
+    to_plot = to_plot.sort_values(by=list_of_genes[0])
+    # Caso queira mudar o tamanho da figura, mudar os valores nos parênteses da linha abaixo:
+    fig, ax = plt.subplots(figsize=(12, 6))
+    for i in range(len(list_of_genes)):
+        _, stemlines, _ = ax.stem(to_plot.index, to_plot[list_of_genes[i]], 
+                linefmt="C" + str(i+2) + "-",
+                markerfmt="C" + str(i+2) + "o", 
+                basefmt=" ", label=list_of_genes[i])
+        plt.setp(stemlines, 'linewidth', 0.5) # altere esse valor à esquerda caso queira mudar a grossura
+        # das linhas que unem os pontos ao eixo X
+    plt.legend()
+    # Achei razoável para o dataset em que eu testei mostrar no eixo X um a cada 100 ids de células (i%100==0)
+    # e garantir que o último id seria mostrado (i==to_plot.shape[0]-1).
+    # Caso queira outra frequência, alterar o valor "100"
+    plt.xticks([i for i in range(to_plot.shape[0]) if (i%100==0)|(i==to_plot.shape[0]-1)],
+           rotation=45, horizontalalignment="right")
+    plt.show()
